@@ -13,7 +13,7 @@ import tak.server.plugins.config.TAKContext;
 /**
  * A general interface for an agent/bot that responds to chat messages
  */
-public interface LLMChatManager {
+public interface LLMChatManager extends AutoCloseable {
 	static final Logger LOGGER = LoggerFactory.getLogger(LLMChatManager.class);
 
 	/**
@@ -24,6 +24,18 @@ public interface LLMChatManager {
 	 * @throws IOException
 	 */
 	public String sendChatRequest(String messageText, TAKContext context) throws IOException;
+
+    default void observeMessage(atakmap.commoncommo.protobuf.v1.MessageOuterClass.Message message) {
+    }
+
+    // Action-capable managers must not replay a whole turn after a partial failure.
+    default boolean allowsRequestRetry() {
+        return true;
+    }
+
+    @Override
+    default void close() {
+    }
 	
 	/**
 	 * A utility function to load a system prompt from the config file or the file system

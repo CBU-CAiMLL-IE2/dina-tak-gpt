@@ -63,7 +63,7 @@ public class TAKChatGenerator {
 	    
 	    String staleStr = dateFormater.format(calendar.getTime());
 		
-		String newCoT = CHAT_TEMPLATE.replaceAll("\\|\\|\\|TEXT\\|\\|\\|", chatText.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"));
+		String newCoT = CHAT_TEMPLATE.replace("|||TEXT|||", chatText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"));
 		newCoT = newCoT.replaceAll("\\|\\|\\|STALE\\|\\|\\|", staleStr);
 		newCoT = newCoT.replaceAll("\\|\\|\\|TIME\\|\\|\\|", nowStr);
 		newCoT = newCoT.replaceAll("\\|\\|\\|UID\\|\\|\\|", destCallsign);

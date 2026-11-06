@@ -7,3 +7,14 @@ bots:
     groups: ["__ANON__"]
     latitude: 0.0
     longitude: 0.0
+    historyMessages: 40
+    cotTypePrefixes: ["a-", "u-d-"]
+    # Create these directories in the TAK container before enabling them.
+    # ragDirectory: "/opt/tak/data/tak-gpt/reference"
+    # attachmentDirectory: "/opt/tak/data/tak-gpt/attachments"
+    # packageDirectory: "/opt/tak/data/tak-gpt/packages"
+    # packageGroup: "__ANON__"
+    # Transfers require a dedicated client certificate restricted to packageGroup.
+    # packageServerUrl: "https://YOUR_TAK_HOST:8443/Marti"
+    # packageKeyStore: "/opt/tak/certs/files/tak-gpt-client.p12"
+    # packageTrustStore: "/opt/tak/certs/files/tak-gpt-trust.p12"

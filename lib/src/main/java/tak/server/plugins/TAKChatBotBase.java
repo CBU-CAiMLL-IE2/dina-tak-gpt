@@ -10,8 +10,6 @@ import static java.util.concurrent.Executors.newScheduledThreadPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
@@ -123,31 +121,40 @@ public class TAKChatBotBase extends MessageSenderReceiverBase {
 
 	@Override
 	public void stop() {
-		// TODO Auto-generated method stub
-		
+		scheduler.shutdownNow();
+		llmManagers.values().forEach(LLMChatManager::close);
 	}
 
 	@Override
 	public void onMessage(Message msg) {
+		llmManagers.values().forEach(manager -> manager.observeMessage(msg));
 		CotEventContainer cec = StreamingProtoBufHelper.proto2cot(msg.getPayload());
 		LOGGER.debug("\n\nReceived CoT Message:\n" + cec.asXml() + "\n\n");
 		if(isChat(msg) && isSentToTAKBot(msg)) {
 			String botName = getDestinationCallsign(msg);
 			LLMChatManager llmChatMgr = llmManagers.get(botName);
 
-			DocumentBuilderFactory dbf 
-            = DocumentBuilderFactory.newInstance(); 
-	       
 			SAXReader reader = new SAXReader();
 	         Document document;
 			try {
+				reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+				reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+				reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 				TAKContext context = new TAKContext();
 				context.setLat(cec.getLat());
 				context.setLon(cec.getLon());
 				context.setCallsign(cec.getCallsign());
+				context.setGroups(new java.util.HashSet<>(msg.getGroupsList()));
+				context.setConnectionId(msg.getConnectionId());
 
 				
-				document = reader.read(new ByteArrayInputStream(("<event>" + msg.getPayload().getCotEvent().getDetail().getXmlDetail() + "</event>").getBytes()) );
+				document = reader.read(new ByteArrayInputStream(("<event>" + msg.getPayload().getCotEvent().getDetail().getXmlDetail() + "</event>").getBytes(java.nio.charset.StandardCharsets.UTF_8)) );
+				Node sender = document.selectSingleNode("/event/__chat/chatgrp/@uid0");
+				context.setSenderUid(sender == null ? "" : sender.getText());
+				Node senderCallsign = document.selectSingleNode("/event/__chat/@senderCallsign");
+				if (senderCallsign != null) {
+					context.setCallsign(senderCallsign.getText());
+				}
 		         List<Node> nodes = document.selectNodes("/event/remarks" );
 		         if(!nodes.isEmpty()) {
 		        	 String text = nodes.get(0).getText();
@@ -155,11 +162,12 @@ public class TAKChatBotBase extends MessageSenderReceiverBase {
 		        	 String response = null;
 		        	 int counter = 0;
 		        	 
-		        	 while(counter++ < 2 && response == null) {
+					 int attempts = llmChatMgr.allowsRequestRetry() ? 2 : 1;
+					 while(counter++ < attempts && response == null) {
 			        	 try {
 			 				response = llmChatMgr.sendChatRequest(text, context);
 			 			} catch (Exception e) {
-			 				LOGGER.error("Error sending chat request to LLM (request attempt " + counter + " of 2", e);
+							LOGGER.error("Error sending chat request to LLM (request attempt " + counter + " of " + attempts + ")", e);
 						} catch (LinkageError e) {
 							LOGGER.error("LLM dependency error; unable to complete chat request", e);
 							break;

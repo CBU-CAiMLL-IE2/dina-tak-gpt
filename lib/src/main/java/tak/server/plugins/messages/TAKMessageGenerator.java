@@ -72,6 +72,17 @@ public class TAKMessageGenerator {
     public void send(Message msg) {
         messageSenderReceiverBase.send(msg);
     }
+
+    public void sendCot(String xml, Set<String> groups, String recipientUid) throws DocumentException {
+        if (groups.isEmpty()) {
+            throw new IllegalArgumentException("TAK messages require an explicit group scope");
+        }
+        Message message = converter.cotStringToDataMessage(xml, groups, "TAK-GPT");
+        if (recipientUid != null) {
+            message = message.toBuilder().addDestClientUids(recipientUid).build();
+        }
+        send(message);
+    }
     
     public Message generateMarker(String type, String name, Float lat, Float lon, Set<String> groups) throws DocumentException {
         SimpleDateFormat dateFormater = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");

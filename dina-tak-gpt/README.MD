@@ -43,6 +43,8 @@ bots:
     groups: ["__ANON__"]        # Default group; confirm users belong to it, or replace/add groups.
     latitude: 0.0
     longitude: 0.0
+    historyMessages: 40
+    cotTypePrefixes: ["a-", "u-d-"]
 ```
 
 ### 3. Build
@@ -75,12 +77,21 @@ docker exec "$TAK_CONTAINER" mkdir -p /opt/tak/conf/plugins
 docker cp /opt/tak-server/plugins/tak-gpt-all-all.jar "${TAK_CONTAINER}:/opt/tak/lib/"
 docker cp /opt/tak-server/plugins/tak.server.plugins.TAKChatBotBase.yaml "${TAK_CONTAINER}:/opt/tak/conf/plugins/"
 
+# Create directories before uncommenting the matching paths in the bot YAML.
+docker exec "$TAK_CONTAINER" mkdir -p /opt/tak/data/tak-gpt/reference /opt/tak/data/tak-gpt/attachments /opt/tak/data/tak-gpt/packages
+
 # Restart TAK Server to load the plugin, then inspect logs.
 docker restart "$TAK_CONTAINER"
 docker logs --follow --tail 100 "$TAK_CONTAINER"
 ```
 
 Check user group membership in TAK Server admin, then connect a client and chat with **DINA TAK GPT** in Contacts. `__ANON__` is a default group, not a wildcard for every group. The TAK host needs outbound HTTPS access to Google authentication and model APIs.
+
+Uncomment `ragDirectory`, `attachmentDirectory`, `packageDirectory` and `packageGroup` in the deployment YAML to enable document search and package building. Allow the TAK runtime account to read references/attachments and write packages. Supply only documents approved for every user of this bot; restart after changing reference files.
+
+For transfers, configure the client-reachable `packageServerUrl`, `packageKeyStore` and `packageTrustStore`. Supply PKCS12 stores and a dedicated **non-admin** client certificate with IN/OUT access only to `packageGroup`. Set `TAK_GPT_KEYSTORE_PASSWORD` and `TAK_GPT_TRUSTSTORE_PASSWORD` in the plugin process environment through your container configuration, then recreate/restart it. Keep secrets outside Git. Allow HTTPS to the endpoint with a matching hostname and trusted certificate.
+
+Connect directly to this server. Use `/reset` to clear history; it also clears on reconnect/restart or after one hour idle. Try “Create a friendly ground marker named Alpha at 34.1, -118.2”, “List recent CoT events”, “Search reference documents for evacuation procedures”, or “Build a package containing briefing.pdf and send it to me”. Downloads require a SHA-256 hash. Transfers notify the requesting user; receipt is not confirmed. Remove old ZIPs when storage reaches 20 packages per caller scope or 200 total. Each package allows 100 contents and 25 MiB.
 
 References: [Google authentication](https://cloud.google.com/docs/authentication/application-default-credentials), [model setup](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal).
 
