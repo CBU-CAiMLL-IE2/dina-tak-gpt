@@ -26,6 +26,7 @@ import tak.server.plugins.agent.AnthropicChatManager;
 import tak.server.plugins.agent.GoogleAgentChatManager;
 import tak.server.plugins.agent.OllamaChatManager;
 import tak.server.plugins.agent.OpenAIAPIChatManager;
+import tak.server.plugins.agent.VertexAIChatManager;
 import tak.server.plugins.config.TAKContext;
 import tak.server.plugins.messages.TAKChatGenerator;
 import tak.server.plugins.messages.TAKMessageGenerator;
@@ -108,6 +109,9 @@ public class TAKChatBotBase extends MessageSenderReceiverBase {
 				case "google-agent":
 					llmManagers.put(botName, new GoogleAgentChatManager(bot));
 					break;
+				case "vertex-ai":
+					llmManagers.put(botName, new VertexAIChatManager(bot));
+					break;
 				default:
 					LOGGER.warn("Unhandled model type: " + modelType + ". Ignoring.");
 			}
@@ -156,6 +160,9 @@ public class TAKChatBotBase extends MessageSenderReceiverBase {
 			 				response = llmChatMgr.sendChatRequest(text, context);
 			 			} catch (Exception e) {
 			 				LOGGER.error("Error sending chat request to LLM (request attempt " + counter + " of 2", e);
+						} catch (LinkageError e) {
+							LOGGER.error("LLM dependency error; unable to complete chat request", e);
+							break;
 			 			}
 		        	 }
 		        	 

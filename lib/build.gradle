@@ -10,18 +10,12 @@ plugins {
 }
 
 repositories {
-  maven {
-    url = 'https://artifacts.tak.gov/artifactory/maven'
-    credentials {
-      username = "$takGovUser"
-      password = "$takGovPassword"
-    }
-  }
   mavenCentral()
 }
 
 dependencies {
-    compileOnly (group: 'gov.tak', name: 'takserver-plugins', version: takserver_plugins_version, classifier: 'all')
+    // TAK Server supplies these libraries at runtime.
+    compileOnly fileTree(dir: 'libs/tak', include: ['*.jar'])
     implementation ('dev.langchain4j:langchain4j:1.9.1')
     implementation ("dev.langchain4j:langchain4j-ollama:1.9.1")
     implementation ("dev.langchain4j:langchain4j-document-parser-apache-pdfbox:1.9.1-beta17")
@@ -30,7 +24,10 @@ dependencies {
     implementation ("com.openai:openai-java:4.14.0")
     implementation ("com.anthropic:anthropic-java:2.11.1")
     implementation ("dev.langchain4j:langchain4j-vertex-ai-gemini:1.9.1-beta17")
-    implementation ("com.google.adk:google-adk-contrib-langchain4j:0.2.0")
+    implementation ("com.google.adk:google-adk-contrib-langchain4j:0.2.0") {
+        // The ADK development web server bundles Spring Boot and conflicts with TAK Server.
+        exclude group: 'com.google.adk', module: 'google-adk-dev'
+    }
     implementation ("com.google.adk:google-adk:0.5.0")
 }
 
@@ -57,6 +54,9 @@ java {
     }
 }
 
+// Use the complete pinned Guava library; the legacy copy lacks methods required by Google GAX.
+sourceSets.main.java.exclude('com/google/common/collect/ImmutableMap.java')
+
 tasks.withType(Zip) {
     zip64 = true
 }
@@ -64,6 +64,11 @@ tasks.withType(Zip) {
 shadowJar {
     zip64 = true
     archiveBaseName = 'tak-gpt-all'
+    // Preserve all gRPC resolver and transport registrations in the shaded JAR.
+    mergeServiceFiles()
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
     relocate ("com.google.common.collect", "shadow.com.google.common.collect")
     dependencies {
        exclude(dependency("com.h2database:h2:2.2.224"))

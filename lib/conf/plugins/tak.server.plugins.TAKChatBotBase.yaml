@@ -1,18 +1,9 @@
 bots:
-  - modelType: "ollama"
-    modelName: "gemma:2b"
-    modelPort: 11434
-    modelHost: "localhost"
-    ragDirectory: /opt/tak/documents/
-    botName: "TAK GPT (gemma:2b)"
-    latitude: 42.3666
-    longitude: -71.1057
-    groups: ["sample_group", "__ANON__"]
-  - modelType: "openai"
-    apiKey: exampleKey
-    baseURL: https://kaya.openai.azure.com/
-    systemPromptFilePath: /opt/tak/conf/plugins/kayaPrompt.txt
-    botName: "Kaya Medical Chatbot"
-    latitude: 36.1627
-    longitude: -86.7816
-    groups: ["sample_group", "__ANON__"]
+  - modelType: "vertex-ai"
+    botName: "DINA TAK GPT"
+    projectID: "YOUR_PROJECT_ID"
+    locationID: "global"
+    modelName: "gemini-3.8-flash"
+    groups: ["__ANON__"]
+    latitude: 0.0
+    longitude: 0.0

@@ -574,7 +574,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
           return of(onlyEntry.getKey(), onlyEntry.getValue());
         default:
           entriesUsed = true;
-          return RegularImmutableMap.fromEntryArray(size, entries);
+          return RegularImmutableMap.fromEntryArray(size, entries, true);
       }
     }
 
@@ -591,7 +591,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
           return of(onlyEntry.getKey(), onlyEntry.getValue());
         default:
           entriesUsed = true;
-          return JdkBackedImmutableMap.create(size, entries);
+          return JdkBackedImmutableMap.create(size, entries, true);
       }
     }
   }

@@ -3,47 +3,54 @@ package tak.server.plugins.agent;
 import java.io.IOException;
 import java.util.Map;
 
-import dev.langchain4j.model.chat.ChatModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import tak.server.plugins.LLMChatManager;
 import tak.server.plugins.config.TAKContext;
 
 /**
- * A bot/agent manager for a Vertex AI-served LLM
- * 
- * BETA - not yet tested with authentication
+ * Sends chat messages to Vertex AI using Application Default Credentials.
  */
 public class VertexAIChatManager implements LLMChatManager{
-    private String projectID;
-    private String location;
-    private String modelName;
-    private String serviceAccountFileLocation;
+    private static final Logger LOGGER = LoggerFactory.getLogger(VertexAIChatManager.class);
+    private final String projectID;
+    private final String location;
+    private final String modelName;
 
     public VertexAIChatManager(Map<String, ? extends Object> config) {
         if(!config.containsKey("projectID")
             || !config.containsKey("locationID")
-            || !config.containsKey("modelName")
-            || !config.containsKey("serviceAccountFileLocation")){
+            || !config.containsKey("modelName")){
                 throw new RuntimeException("Unable to start, missing configuration parameter(s)");
         }
 
-        serviceAccountFileLocation = (String)config.get("serviceAccountFileLocation");
         projectID = (String)config.get("projectID");
         location = (String)config.get("locationID");
         modelName = (String)config.get("modelName");
-
-        System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", serviceAccountFileLocation);
     }
 
     @Override
     public String sendChatRequest(String messageText, TAKContext context) throws IOException {
-        ChatModel model = VertexAiGeminiChatModel.builder()
+        long startTime = System.nanoTime();
+        LOGGER.info("Initializing Vertex AI client for location {}, model {}", location, modelName);
+        var modelBuilder = VertexAiGeminiChatModel.builder()
             .project(projectID)
             .location(location)
-            .modelName(modelName)
-            .build();
+            .modelName(modelName);
 
-        return model.chat("Explain quantum computing in one sentence.");
+        // The global location uses the unprefixed API endpoint.
+        if ("global".equals(location)) {
+            modelBuilder.apiEndpoint("aiplatform.googleapis.com");
+        }
+
+        try (VertexAiGeminiChatModel model = modelBuilder.build()) {
+            LOGGER.info("Vertex AI client initialized; requesting model response");
+            String response = model.chat(messageText);
+            LOGGER.info("Vertex AI response received after {} ms", (System.nanoTime() - startTime) / 1_000_000);
+            return response;
+        }
     }
 
 }

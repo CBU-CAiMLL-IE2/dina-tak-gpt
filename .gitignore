@@ -3,3 +3,6 @@
 
 # Ignore Gradle build output directory
 build
+
+# Supply TAK Server libraries locally; do not commit imported JARs.
+/lib/libs/tak/*.jar
