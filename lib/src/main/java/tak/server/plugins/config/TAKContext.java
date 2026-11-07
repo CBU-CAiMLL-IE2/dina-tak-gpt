@@ -4,6 +4,15 @@ public class TAKContext {
     private String lat;
     private String lon;
     private String callsign;
+    private String senderUid;
+
+    public String getSenderUid() {
+        return senderUid;
+    }
+
+    public void setSenderUid(String senderUid) {
+        this.senderUid = senderUid;
+    }
 
     public String getLat() {
         return lat;

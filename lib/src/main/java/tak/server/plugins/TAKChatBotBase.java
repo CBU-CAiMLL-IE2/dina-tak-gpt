@@ -123,8 +123,15 @@ public class TAKChatBotBase extends MessageSenderReceiverBase {
 
 	@Override
 	public void stop() {
-		// TODO Auto-generated method stub
-		
+		for (LLMChatManager manager : llmManagers.values()) {
+			if (manager instanceof AutoCloseable closeable) {
+				try {
+					closeable.close();
+				} catch (Exception e) {
+					LOGGER.error("Unable to close LLM client", e);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -148,6 +155,7 @@ public class TAKChatBotBase extends MessageSenderReceiverBase {
 
 				
 				document = reader.read(new ByteArrayInputStream(("<event>" + msg.getPayload().getCotEvent().getDetail().getXmlDetail() + "</event>").getBytes()) );
+				context.setSenderUid(document.valueOf("/event/__chat/chatgrp/@uid0"));
 		         List<Node> nodes = document.selectNodes("/event/remarks" );
 		         if(!nodes.isEmpty()) {
 		        	 String text = nodes.get(0).getText();

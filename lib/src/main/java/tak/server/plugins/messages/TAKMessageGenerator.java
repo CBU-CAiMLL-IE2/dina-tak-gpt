@@ -4,9 +4,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
+import org.dom4j.Document;
 import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +77,8 @@ public class TAKMessageGenerator {
     }
     
     public Message generateMarker(String type, String name, Float lat, Float lon, Set<String> groups) throws DocumentException {
-        SimpleDateFormat dateFormater = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        dateFormater.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date now = new Date();
 		String nowStr = dateFormater.format(now);
 		
@@ -85,13 +89,14 @@ public class TAKMessageGenerator {
 	    String staleStr = dateFormater.format(calendar.getTime());
 
         String messageTemplate = TEMPLATE.replace("|||MARKER_UID|||", UUID.randomUUID().toString())
-        .replace("|||TYPE|||", type)
         .replace("|||TIME|||", nowStr)
         .replace("|||STALE|||", staleStr)
         .replace("|||LAT|||", lat.toString())
-        .replace("|||LON|||", lon.toString())
-        .replace("|||MARKER_NAME|||", name);
-        return converter.cotStringToDataMessage(messageTemplate, groups, Integer.toString(System.identityHashCode(this)));
+        .replace("|||LON|||", lon.toString());
+        Document marker = DocumentHelper.parseText(messageTemplate);
+        marker.getRootElement().addAttribute("type", type);
+        marker.getRootElement().element("detail").element("contact").addAttribute("callsign", name);
+        return converter.cotStringToDataMessage(marker.asXML(), groups, Integer.toString(System.identityHashCode(this)));
         
     }
 }

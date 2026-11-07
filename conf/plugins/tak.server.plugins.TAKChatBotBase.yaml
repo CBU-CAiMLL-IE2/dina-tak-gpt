@@ -1,5 +1,5 @@
 bots:
-  - modelType: "vertex-ai"
+  - modelType: "google-agent"
     botName: "DINA TAK GPT"
     projectID: "YOUR_PROJECT_ID"
     locationID: "global"

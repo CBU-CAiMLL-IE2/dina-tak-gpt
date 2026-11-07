@@ -35,7 +35,7 @@ Use `conf/plugins/tak.server.plugins.TAKChatBotBase.yaml` as the template. Set t
 
 ```yaml
 bots:
-  - modelType: "vertex-ai"
+  - modelType: "google-agent"
     botName: "DINA TAK GPT"
     projectID: "YOUR_PROJECT_ID"
     locationID: "global"
@@ -81,6 +81,8 @@ docker logs --follow --tail 100 "$TAK_CONTAINER"
 ```
 
 Check user group membership in TAK Server admin, then connect a client and chat with **DINA TAK GPT** in Contacts. `__ANON__` is a default group, not a wildcard for every group. The TAK host needs outbound HTTPS access to Google authentication and model APIs.
+
+Ask the bot to create a point, for example: `Create a friendly ground map marker named Alpha at latitude 34.1234 and longitude -117.1234.` Markers are sent to the bot's configured groups. Chat history is kept separately for each sender UID in memory and resets when the plugin restarts.
 
 References: [Google authentication](https://cloud.google.com/docs/authentication/application-default-credentials), [model setup](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal).
 
